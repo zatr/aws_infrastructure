@@ -71,6 +71,11 @@ resource "aws_codebuild_project" "application" {
     type = "LINUX_CONTAINER"
     image_pull_credentials_type = "CODEBUILD"
     privileged_mode = false
+
+    environment_variable {
+      name  = "REPOSITORY"
+      value = var.repository
+    }
   }
 
   tags = {
