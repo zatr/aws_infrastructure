@@ -1,17 +1,9 @@
-resource "aws_s3_bucket" "aws_tester_build_artifacts" {
-  bucket = "itp-cicd-build-artifacts"
-  acl = "private"
-
-  tags = {
-    Application = "aws_tester"
-  }
+resource "aws_s3_bucket" "build_artifacts" {
+  bucket = local.build_artifacts_bucket
+  acl    = "private"
 }
 
-resource "aws_s3_bucket" "aws_tools_build_artifacts" {
-  bucket = "itp-cicd-build-artifacts"
-  acl = "private"
-
-  tags = {
-    Application = "aws_tools"
-  }
+resource "aws_s3_bucket" "deployment_bucket" {
+  bucket = local.deployment_bucket
+  acl    = "private"
 }

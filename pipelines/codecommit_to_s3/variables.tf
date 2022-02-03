@@ -24,3 +24,8 @@ variable "artifact_bucket" {
 variable "application_tag" {
   type = string
 }
+
+variable "deployment_bucket" {
+  type = string
+  description = "Bucket to deploy software packages"
+}

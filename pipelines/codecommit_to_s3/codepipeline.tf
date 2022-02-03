@@ -1,9 +1,16 @@
 data "aws_iam_policy_document" "codepipeline" {
+  
+  # Create build artifacts
   statement {
-    actions   = ["s3:*"]
+    actions   = [
+      "s3:PutObject",
+      "s3:GetObject"
+    ]
     effect    = "Allow"
-    resources = ["arn:aws:s3:::${var.artifact_bucket}/${var.repository}-${var.branch}/*"]
+    resources = ["arn:aws:s3:::${var.artifact_bucket}/*"]
   }
+
+  # Get source from CodeCommit and upload
   statement {
     actions   = [
       "codecommit:GetBranch",
@@ -15,6 +22,8 @@ data "aws_iam_policy_document" "codepipeline" {
     effect    = "Allow"
     resources = ["arn:aws:codecommit:${var.aws_region}:${var.aws_account_id}:${var.repository}"]
   }
+
+  # Start CodeBuild job
   statement {
     actions   = [
       "codebuild:StartBuild",
@@ -23,10 +32,17 @@ data "aws_iam_policy_document" "codepipeline" {
     effect    = "Allow"
     resources = [aws_codebuild_project.application.arn]
   }
+
+  # Deploy to S3
+  statement {
+    actions   = ["s3:PutObject"]
+    effect    = "Allow"
+    resources = ["arn:aws:s3:::${var.deployment_bucket}/*"]
+  }
 }
 
 resource "aws_iam_role" "codepipeline" {
-  name = "codepipeline-${var.repository}-${var.branch}"
+  name = "${var.repository}-${var.branch}-codepipeline"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -37,7 +53,7 @@ resource "aws_iam_role" "codepipeline" {
         Principal = {
           Service = "codepipeline.amazonaws.com"
         }
-      },
+      }
     ]
   })
 
@@ -47,7 +63,7 @@ resource "aws_iam_role" "codepipeline" {
 }
 
 resource "aws_iam_role_policy" "codepipeline" {
-  name = "codepipeline-${var.repository}-${var.branch}"
+  name = "${var.repository}-${var.branch}-codepipeline"
   role = aws_iam_role.codepipeline.id
   policy = data.aws_iam_policy_document.codepipeline.json
 }
@@ -55,12 +71,15 @@ resource "aws_iam_role_policy" "codepipeline" {
 resource "aws_codepipeline" "codepipeline" {
   name     = "${var.repository}-${var.branch}"
   role_arn = aws_iam_role.codepipeline.arn
+
   artifact_store {
     location = var.artifact_bucket
     type     = "S3"
   }
+
   stage {
     name = "Source"
+
     action {
       category         = "Source"
       name             = "Source"
@@ -79,6 +98,7 @@ resource "aws_codepipeline" "codepipeline" {
 
   stage {
     name = "Build"
+
     action {
       category         = "Build"
       name             = "Build"
@@ -90,7 +110,25 @@ resource "aws_codepipeline" "codepipeline" {
       configuration    = {
         ProjectName = aws_codebuild_project.application.name
       }
-      namespace = "BuildVariables"
+      namespace        = "BuildVariables"
+    }
+  }
+
+  stage {
+    name = "Deploy"
+
+    action {
+      name             = "Deploy_to_S3"
+      category         = "Deploy"
+      owner            = "AWS"
+      provider         = "S3"
+      version          = "1"
+      input_artifacts  = ["BuildArtifact"]
+      configuration    = {
+        BucketName = var.deployment_bucket
+        Extract    = false
+        ObjectKey  = "${var.repository}/${var.branch}-build_#{BuildVariables.CODEBUILD_BUILD_NUMBER}.zip"
+      }
     }
   }
 }
