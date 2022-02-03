@@ -1,3 +1,4 @@
+# Build source, deploy to S3
 module "cicd_aws_tester_main" {
   source = "./pipelines/codecommit_to_s3"
   repository = "aws_tester"
@@ -9,8 +10,9 @@ module "cicd_aws_tester_main" {
   deployment_bucket = local.deployment_bucket
 }
 
+# Build source, deploy to S3, invoke start_test_runner function
 module "cicd_aws_tools_main" {
-  source = "./pipelines/codecommit_to_s3"
+  source = "./pipelines/codecommit_to_s3_invoke_lambda"
   repository = "aws_tools"
   branch = "main"
   artifact_bucket = aws_s3_bucket.build_artifacts.bucket
@@ -18,4 +20,5 @@ module "cicd_aws_tools_main" {
   aws_region = var.aws_region
   aws_account_id = var.aws_account_id
   deployment_bucket = local.deployment_bucket
+  lambda_function = "start_test_runner"
 }

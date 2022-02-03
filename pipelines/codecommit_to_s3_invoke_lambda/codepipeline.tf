@@ -39,6 +39,13 @@ data "aws_iam_policy_document" "codepipeline" {
     effect    = "Allow"
     resources = ["arn:aws:s3:::${var.deployment_bucket}/*"]
   }
+
+  # Invoke Lambda function
+  statement {
+    actions   = ["lambda:InvokeFunction"]
+    effect    = "Allow"
+    resources = ["arn:aws:lambda:${var.aws_region}:${var.aws_account_id}:function:${var.lambda_function}"]
+  }
 }
 
 resource "aws_iam_role" "codepipeline" {
@@ -128,6 +135,23 @@ resource "aws_codepipeline" "codepipeline" {
         BucketName = var.deployment_bucket
         Extract    = false
         ObjectKey  = "${var.repository}/${var.branch}/${var.repository}-${var.branch}-build_#{BuildVariables.CODEBUILD_BUILD_NUMBER}.zip"
+      }
+    }
+  }
+
+  stage {
+    name = "Invoke"
+
+    action {
+      name             = "Invoke_Lambda"
+      category         = "Invoke"
+      owner            = "AWS"
+      provider         = "Lambda"
+      version          = "1"
+      input_artifacts  = ["BuildArtifact"]
+      configuration    = {
+        FunctionName   = var.lambda_function
+        UserParameters = "#{BuildVariables.CODEBUILD_BUILD_NUMBER}"
       }
     }
   }
