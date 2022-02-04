@@ -26,7 +26,7 @@ EOF
 
 data "aws_iam_policy_document" "codedeploy" {
 
-  // Allow logging to CloudWatch
+  # Allow logging to CloudWatch
   statement {
     actions = [
       "logs:CreateLogGroup",

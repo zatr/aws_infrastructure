@@ -21,7 +21,7 @@ resource "aws_iam_role" "codebuild" {
 
 data "aws_iam_policy_document" "codebuild" {
 
-  // Allow logging to CloudWatch
+  # Allow logging to CloudWatch
   statement {
     actions = [
       "logs:CreateLogGroup",
@@ -34,12 +34,14 @@ data "aws_iam_policy_document" "codebuild" {
     ]
   }
 
+  # Allow interaction with S3
   statement {
     actions   = ["s3:*"]
     effect    = "Allow"
     resources = ["arn:aws:s3:::${var.artifact_bucket}/${var.repository}-${var.branch}/*"]
   }
 
+  # Allow CodeCommit push and pull
   statement {
     actions   = [
       "codecommit:GitPull",
