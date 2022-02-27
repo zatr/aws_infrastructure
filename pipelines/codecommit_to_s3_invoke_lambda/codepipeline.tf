@@ -1,3 +1,24 @@
+resource "aws_iam_role" "codepipeline" {
+  name = "${var.repository}-${var.branch}-codepipeline"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Sid    = ""
+        Principal = {
+          Service = "codepipeline.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = {
+    Application = var.application_tag
+  }
+}
+
 data "aws_iam_policy_document" "codepipeline" {
 
   # Create build artifacts
@@ -45,27 +66,6 @@ data "aws_iam_policy_document" "codepipeline" {
     actions   = ["lambda:InvokeFunction"]
     effect    = "Allow"
     resources = ["arn:aws:lambda:${var.aws_region}:${var.aws_account_id}:function:${var.lambda_function}"]
-  }
-}
-
-resource "aws_iam_role" "codepipeline" {
-  name = "${var.repository}-${var.branch}-codepipeline"
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Sid    = ""
-        Principal = {
-          Service = "codepipeline.amazonaws.com"
-        }
-      }
-    ]
-  })
-
-  tags = {
-    Application = var.application_tag
   }
 }
 

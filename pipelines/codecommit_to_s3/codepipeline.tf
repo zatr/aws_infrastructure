@@ -1,3 +1,24 @@
+resource "aws_iam_role" "codepipeline" {
+  name = "${var.repository}-${var.branch}-codepipeline"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Sid    = ""
+        Principal = {
+          Service = "codepipeline.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = {
+    Application = var.application_tag
+  }
+}
+
 data "aws_iam_policy_document" "codepipeline" {
 
   # Create build artifacts
@@ -38,27 +59,6 @@ data "aws_iam_policy_document" "codepipeline" {
     actions   = ["s3:PutObject"]
     effect    = "Allow"
     resources = ["arn:aws:s3:::${var.deployment_bucket}/*"]
-  }
-}
-
-resource "aws_iam_role" "codepipeline" {
-  name = "${var.repository}-${var.branch}-codepipeline"
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Sid    = ""
-        Principal = {
-          Service = "codepipeline.amazonaws.com"
-        }
-      }
-    ]
-  })
-
-  tags = {
-    Application = var.application_tag
   }
 }
 
