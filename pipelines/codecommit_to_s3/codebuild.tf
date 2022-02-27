@@ -1,5 +1,5 @@
 resource "aws_iam_role" "codebuild" {
-  name = "codebuild-${var.repository}-${var.branch}"
+  name = "${var.repository}-${var.branch}-codebuild"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
